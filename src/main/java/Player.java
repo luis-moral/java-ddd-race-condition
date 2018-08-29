@@ -12,7 +12,11 @@ public class Player {
         return coins;
     }
 
-    public void buy(Item item) {
+    public void buy(Item item) throws NotEnoughCoinsException {
+        if (coins < item.getPrinceInCoins()) {
+            throw new NotEnoughCoinsException();
+        }
+
         coins -= item.getPrinceInCoins();
 
         playerRepository.save(this);
