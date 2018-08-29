@@ -12,7 +12,7 @@ public class PlayerService {
         this.itemRepository = itemRepository;
     }
 
-    public void buyItemForPlayer(int playerId, int itemId) throws NotEnoughCoinsException {
+    public void buyItemFor(int playerId, int itemId) throws NotEnoughCoinsException {
         Player player = playerRepository.findById(playerId);
         Item item = itemRepository.findById(itemId);
 

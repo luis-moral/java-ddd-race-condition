@@ -38,7 +38,7 @@ public class PlayerServiceShould {
     @Test public void
     allow_players_to_buy_items() throws NotEnoughCoinsException {
         PlayerService playerService = new PlayerService(playerRepository, itemRepository);
-        playerService.buyItemForPlayer(BOB_PLAYER_ID, BAG_ITEM_ID);
+        playerService.buyItemFor(BOB_PLAYER_ID, BAG_ITEM_ID);
 
         Mockito
             .verify(bob, Mockito.times(1))

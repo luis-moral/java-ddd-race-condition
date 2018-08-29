@@ -20,13 +20,15 @@ public class BuyItemFeature {
     }
 
     @Test public void
-    player_should_be_able_to_buy_items_if_has_enough_money() {
+    player_should_be_able_to_buy_items_if_has_enough_money() throws NotEnoughCoinsException {
         Item bag = new Item(BAG_PLAYER_ID, 25);
         Player bob = new Player(inMemoryPlayerRepository, BOB_PLAYER_ID, 40);
 
         inMemoryItemRepository.add(bag);
         inMemoryPlayerRepository.add(bob);
 
-        Assertions.assertThat(playerService.getInventoryFor(BOB_PLAYER_ID)).isEqualTo(BAG_PLAYER_ID);
+        playerService.buyItemFor(BOB_PLAYER_ID, BAG_PLAYER_ID);
+
+        Assertions.assertThat(playerService.getInventoryFor(BOB_PLAYER_ID)).containsExactly(BAG_PLAYER_ID);
     }
 }
