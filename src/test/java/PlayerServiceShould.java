@@ -13,7 +13,7 @@ import java.util.Arrays;
 public class PlayerServiceShould {
 
     private static final int BOB_PLAYER_ID = 1;
-    private static final int BAG_ITEM_ID = 10;
+    private static final int BAG_ITEM_ID = 20;
 
     @Mock
     Player bob;
@@ -57,6 +57,6 @@ public class PlayerServiceShould {
 
         PlayerService playerService = new PlayerService(playerRepository, itemRepository);
 
-        Assertions.assertThat(playerService.getInventoryFor(BOB_PLAYER_ID)).containsExactly(BAG_ITEM_ID);
+        Assertions.assertThat(playerService.getInventoryFor(BOB_PLAYER_ID)).containsOnly(BAG_ITEM_ID);
     }
 }
