@@ -1,10 +1,7 @@
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
-import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,7 +18,7 @@ public class BuyItemFeature {
 
     @Before
     public void setUp() {
-        inMemoryPlayerRepository = new InMemoryPlayerRepository();
+        inMemoryPlayerRepository = new DelayedInMemoryPlayerRepository();
         inMemoryItemRepository = new InMemoryItemRepository();
 
         playerService = new PlayerService(inMemoryPlayerRepository, inMemoryItemRepository);
@@ -41,8 +38,8 @@ public class BuyItemFeature {
     }
 
     @Test public void
-    player_should_not_be_able_to_buy_items_if_does_not_have_enough_coins() {
-        List<Throwable> errors = new LinkedList<>();
+    player_should_not_be_able_to_buy_items_if_does_not_have_enough_coins() throws InterruptedException {
+        List<NotEnoughCoinsException> errors = new LinkedList<>();
 
         Player bob = new Player(inMemoryPlayerRepository, BOB_PLAYER_ID, 40);
         Item bag = new Item(BAG_ITEM_ID, 25);
@@ -54,39 +51,58 @@ public class BuyItemFeature {
         inMemoryItemRepository.add(clock);
         inMemoryItemRepository.add(pants);
 
-        buyItemForMono(BOB_PLAYER_ID, BAG_ITEM_ID)
-            .doOnError(IllegalArgumentException.class, e -> errors.add(e.getCause()))
-            .subscribeOn(Schedulers.elastic())
-            .subscribe();
+        BuyItemThread firstBuy = new BuyItemThread(BOB_PLAYER_ID, BAG_ITEM_ID, playerService, errors);
+        BuyItemThread secondBuy = new BuyItemThread(BOB_PLAYER_ID, CLOCK_ITEM_ID, playerService, errors);
+        BuyItemThread thirdBuy = new BuyItemThread(BOB_PLAYER_ID, PANTS_ITEM_ID, playerService, errors);
 
-        buyItemForMono(BOB_PLAYER_ID, CLOCK_ITEM_ID)
-            .doOnError(IllegalArgumentException.class, e -> errors.add(e.getCause()))
-            .subscribeOn(Schedulers.elastic())
-            .subscribe();
+        firstBuy.start();
+        secondBuy.start();
+        thirdBuy.start();
 
-        buyItemForMono(BOB_PLAYER_ID, PANTS_ITEM_ID)
-            .doOnError(IllegalArgumentException.class, e -> errors.add(e.getCause()))
-            .subscribeOn(Schedulers.elastic())
-            .subscribe();
+        firstBuy.join();
+        secondBuy.join();
+        thirdBuy.join();
 
-        Mono
-            .delay(Duration.ofMillis(200))
-            .block();
-
-        Assertions.assertThat(playerService.getInventoryFor(BOB_PLAYER_ID)).containsOnly(BAG_ITEM_ID);
+        Assertions.assertThat(bob.getInventory()).containsAnyOf(bag, clock, pants);
+        Assertions.assertThat(bob.getInventory()).hasSize(1);
         Assertions.assertThat(errors).hasSize(2);
         Assertions.assertThat(errors.get(0).getClass()).isEqualTo(NotEnoughCoinsException.class);
     }
 
-    private Mono<Void> buyItemForMono(int playerId, int itemId) {
-        return
-            Mono
-                .fromRunnable(() -> {
-                    try {
-                        playerService.buyItemFor(playerId, itemId);
-                    } catch (NotEnoughCoinsException e) {
-                        throw new IllegalArgumentException(e);
-                    }
-                });
+    private static class BuyItemThread extends Thread {
+        private final int playerId;
+        private final int itemId;
+        private final PlayerService playerService;
+        private final List<NotEnoughCoinsException> errors;
+
+        private BuyItemThread(int playerId, int itemId, PlayerService playerService, List<NotEnoughCoinsException> errors) {
+            this.playerId = playerId;
+            this.itemId = itemId;
+            this.playerService = playerService;
+            this.errors = errors;
+        }
+
+        public void run() {
+            try {
+                playerService.buyItemFor(playerId, itemId);
+            }
+            catch (NotEnoughCoinsException e) {
+                errors.add(e);
+            }
+        }
+    }
+
+    private static class DelayedInMemoryPlayerRepository extends InMemoryPlayerRepository {
+
+        @Override
+        public Player findById(int playerId) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            return super.findById(playerId);
+        }
     }
 }

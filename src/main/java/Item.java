@@ -15,4 +15,12 @@ public class Item {
     public int getPrinceInCoins() {
         return princeInCoins;
     }
+
+    @Override
+    public String toString() {
+        return "Item{" +
+                "id=" + id +
+                ", princeInCoins=" + princeInCoins +
+                '}';
+    }
 }
