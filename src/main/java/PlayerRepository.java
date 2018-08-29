@@ -1,5 +1,3 @@
-public class PlayerRepository {
-    public void save(Player player) {
-        throw new UnsupportedOperationException();
-    }
+public interface PlayerRepository {
+    void save(Player player);
 }
