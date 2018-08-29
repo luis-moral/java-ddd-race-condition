@@ -8,15 +8,16 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PlayerShould {
 
-    private static final int ID_PLAYER = 1;
+    private static final int BOB_PLAYER_ID = 1;
+    private static final int BAG_PLAYER_ID = 10;
 
     @Mock
     PlayerRepository playerRepository;
 
     @Test public void
-    reduce_coins_when_buying_item() throws NotEnoughCoinsException {
-        Item item = new Item(25);
-        Player player = new Player(playerRepository, ID_PLAYER, 40);
+    be_able_to_buy_items() throws NotEnoughCoinsException {
+        Item item = new Item(BAG_PLAYER_ID, 25);
+        Player player = new Player(playerRepository, BOB_PLAYER_ID, 40);
         player.buy(item);
 
         Assertions
@@ -33,9 +34,9 @@ public class PlayerShould {
     }
 
     @Test(expected = NotEnoughCoinsException.class) public void
-    have_a_positive_amount_of_coins() throws NotEnoughCoinsException {
-        Item item = new Item(25);
-        Player player = new Player(playerRepository, ID_PLAYER, 40);
+    have_enough_coins_to_buy_an_item() throws NotEnoughCoinsException {
+        Item item = new Item(BAG_PLAYER_ID, 25);
+        Player player = new Player(playerRepository, BOB_PLAYER_ID, 40);
         player.buy(item);
         player.buy(item);
     }

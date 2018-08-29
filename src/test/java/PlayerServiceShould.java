@@ -1,3 +1,4 @@
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -5,6 +6,8 @@ import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.Arrays;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PlayerServiceShould {
@@ -40,5 +43,20 @@ public class PlayerServiceShould {
         Mockito
             .verify(bob, Mockito.times(1))
             .buy(bag);
+    }
+
+    @Test public void
+    return_the_player_inventory() {
+        BDDMockito
+            .given(bag.getId())
+            .willReturn(BAG_ITEM_ID);
+
+        BDDMockito
+            .given(bob.getInventory())
+            .willReturn(Arrays.asList(bag));
+
+        PlayerService playerService = new PlayerService(playerRepository, itemRepository);
+
+        Assertions.assertThat(playerService.getInventoryFor(BOB_PLAYER_ID)).containsExactly(BAG_ITEM_ID);
     }
 }

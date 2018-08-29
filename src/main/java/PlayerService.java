@@ -1,3 +1,7 @@
+import java.util.Collection;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
 public class PlayerService {
 
     private final PlayerRepository playerRepository;
@@ -13,5 +17,14 @@ public class PlayerService {
         Item item = itemRepository.findById(itemId);
 
         player.buy(item);
+    }
+
+    public Collection<Integer> getInventoryFor(int playerId) {
+        return
+            playerRepository.findById(playerId)
+                .getInventory()
+                .stream()
+                .map(item -> item.getId())
+                .collect(Collectors.toList());
     }
 }
