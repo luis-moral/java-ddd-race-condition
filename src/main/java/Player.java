@@ -2,6 +2,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Player {
 
@@ -10,6 +12,7 @@ public class Player {
     private int coins;
 
     private Set<Item> items;
+    private Lock buyItemLock;
 
     public Player(PlayerRepository playerRepository, int id, int coins) {
         this.id = id;
@@ -17,6 +20,7 @@ public class Player {
         this.coins = coins;
 
         items = new HashSet<>();
+        buyItemLock = new ReentrantLock();
     }
 
     public int getId() {
@@ -32,13 +36,30 @@ public class Player {
     }
 
     public void buy(Item item) throws NotEnoughCoinsException {
-        if (coins < item.getPrinceInCoins()) {
-            throw new NotEnoughCoinsException();
+        executeInLock(buyItemLock, () -> {
+            if (coins < item.getPrinceInCoins()) {
+                throw new NotEnoughCoinsException();
+            }
+
+            coins -= item.getPrinceInCoins();
+            items.add(item);
+
+            playerRepository.save(this);
+        });
+    }
+
+    private void executeInLock(Lock lock, Action action) throws NotEnoughCoinsException {
+        try {
+            lock.lock();
+            action.execute();
         }
+        finally {
+            lock.unlock();
+        }
+    }
 
-        coins -= item.getPrinceInCoins();
-        items.add(item);
-
-        playerRepository.save(this);
+    @FunctionalInterface
+    private interface Action {
+        void execute() throws NotEnoughCoinsException;
     }
 }
